@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please enter your password"],
     minLength: [8, "Password should be greater than 8 charaters"],
-    select: false, //find method will node return password field
+    select: false, //find method will not return password field
   },
   avatar: {
     public_id: {
