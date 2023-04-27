@@ -179,3 +179,69 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
+
+
+//admin routes
+//get all users(admin)
+exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
+    const users = await User.find({ role: "user" });
+    // console.log(users);
+    res.status(200).json({
+      success: true,
+      users,
+    });
+});
+
+
+//get single user(admin)
+exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
+    const user = await User.findById(req.params.id);
+    // console.log(users);
+    if (!user) {
+       return next(new ErrorHandler(`user doesn't exist with id ${req.params.id}`)); 
+    }
+    res.status(200).json({
+      success: true,
+      user,
+    });
+});
+
+//update user role (admin)
+exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
+    const newUserData = {
+      name: req.body.name,
+      email: req.body.email,
+      role: req.body.role,
+    };
+
+    const user = await User.findByIdAndUpdate(req.params.id, newUserData, {
+      new: true,
+      runValidators: true,
+      useFindAndModify: false,
+    });
+
+    res.status(200).json({
+        success:true
+    });
+});
+
+
+//Delete user  (admin)
+exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
+
+    const user =await User.findById(req.params.id);
+
+    //we will remove cloudinary later
+    if (!user) {
+      return next(
+        new ErrorHandler(`user doesn't exist with id ${req.params.id}`)
+      );
+    }
+
+    await user.deleteOne();
+    res.status(200).json({
+        success: true,
+        message:"User deleted successfully"
+    });
+});
+
