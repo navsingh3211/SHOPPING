@@ -62,12 +62,59 @@ exports.myOrders = catchAsyncErrors(async (req, res, next) => {
 
 
 
-//get all orders (admin only)---> in progress
+//get all orders (admin only)
 exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
-  const orders = await Order.find();
+    const orders = await Order.find();
 
-  res.status(200).json({
-    success: true,
-    orders,
-  });
+    let totalAmount = 0;
+    orders.forEach((order) => {
+        totalAmount += order.totalPrice;
+    });
+    res.status(200).json({
+        success: true,
+        totalAmount,
+        orders,
+    });
+});
+
+
+//update order status (Admin)
+exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
+    const order = await Order.findById(req.params.id);
+    if (order.orderStatus == "Delivered") {
+        return next(
+            new ErrorHandler("You have already delivered this order", 500)
+        );
+    }
+    order.orderItems.forEach(async (order) => {
+        await updateStock(order.product,order.quantity);
+    });
+    order.orderStatus = req.body.status;
+    if (req.body.status === "Delivered") {
+        order.deliveredAt= Date.now();
+    }
+    await order.save({validateBeforeSave:false});
+    res.status(200).json({
+        success: true
+    });
+});
+
+async function updateStock(id, quantity) {
+    const product = await Product.findById(id);
+    product.stock -= quantity;
+    await product.save({ validateBeforeSave: false });
+}
+
+
+//delete all orders (admin only)
+exports.deleteOrder = catchAsyncErrors(async (req, res, next) => {
+    const orders = await Order.findById(req.params.id);
+    if (!orders) {
+      return next(new ErrorHandler("No order found with the given Id!", 500));
+    }
+    await orders.deleteOne();
+
+    res.status(200).json({
+        success: true,
+    });
 });
